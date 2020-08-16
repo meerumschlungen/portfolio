@@ -663,7 +663,11 @@ public class AccountTransactionModel extends AbstractModel
     protected long calculateGrossAmount4Total()
     {
         long feesAndTaxes = fees + taxes + Math.round(exchangeRate.doubleValue() * (forexFees + fxTaxes));
-        return total + feesAndTaxes;
+        
+        if (AccountTransaction.Type.BUY_OPTION.equals(type))
+            return total - feesAndTaxes;
+        else
+            return total + feesAndTaxes;
     }
 
     protected long calculateGrossAmount4Dividend()
