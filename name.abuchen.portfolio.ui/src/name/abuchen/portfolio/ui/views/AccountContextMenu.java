@@ -95,6 +95,24 @@ public class AccountContextMenu
                             .with(account) //
                             .with(security) //
                             .addTo(manager);
+
         }
+        
+        if (!owner.getClient().getActivePortfolios().isEmpty())
+        {
+            new OpenDialogAction(owner, AccountTransaction.Type.BUY_OPTION.toString() + "...") //$NON-NLS-1$
+            .type(AccountTransactionDialog.class) //
+            .parameters(AccountTransaction.Type.BUY_OPTION) //
+            .with(account) //
+            .with(security) //
+            .addTo(manager);
+            
+            new OpenDialogAction(owner, AccountTransaction.Type.SELL_OPTION.toString() + "...") //$NON-NLS-1$
+            .type(AccountTransactionDialog.class) //
+            .parameters(AccountTransaction.Type.SELL_OPTION) //
+            .with(account) //
+            .with(security) //
+            .addTo(manager);
+        }        
     }
 }

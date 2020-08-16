@@ -792,6 +792,7 @@ public class AccountListView extends AbstractListView implements ModificationLis
                 case SELL:
                 case TRANSFER_IN:
                 case FEES_REFUND:
+                case SELL_OPTION:
                     balance.add(t.getMonetaryAmount());
                     break;
                 case REMOVAL:
@@ -800,6 +801,7 @@ public class AccountListView extends AbstractListView implements ModificationLis
                 case TAXES:
                 case BUY:
                 case TRANSFER_OUT:
+                case BUY_OPTION:
                     balance.subtract(t.getMonetaryAmount());
                     break;
                 default:

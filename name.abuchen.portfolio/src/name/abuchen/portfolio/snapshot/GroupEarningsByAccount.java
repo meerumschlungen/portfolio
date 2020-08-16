@@ -107,6 +107,18 @@ public class GroupEarningsByAccount
                             taxes.add(at.getUnitSum(Unit.Type.TAX));
                             fees.add(at.getUnitSum(Unit.Type.FEE));
                             break;
+                        case BUY_OPTION:
+                            interest.add(at.getGrossValue());
+                            sum.add(at.getGrossValue());
+                            taxes.add(at.getUnitSum(Unit.Type.TAX));
+                            fees.add(at.getUnitSum(Unit.Type.FEE));
+                            break;
+                        case SELL_OPTION:
+                            interest.add(at.getGrossValue());
+                            sum.add(at.getGrossValue());
+                            taxes.add(at.getUnitSum(Unit.Type.TAX));
+                            fees.add(at.getUnitSum(Unit.Type.FEE));
+                            break;
                         case FEES:
                             fees.add(at.getMonetaryAmount());
                             break;

@@ -47,6 +47,7 @@ import name.abuchen.portfolio.snapshot.PortfolioSnapshot;
 import name.abuchen.portfolio.snapshot.SecurityPosition;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.UIConstants;
+import name.abuchen.portfolio.ui.dialogs.transactions.AbstractTransactionDialog.Input;
 import name.abuchen.portfolio.ui.dialogs.transactions.AccountTransactionModel.Properties;
 import name.abuchen.portfolio.ui.util.FormDataFactory;
 import name.abuchen.portfolio.ui.util.LabelOnly;
@@ -120,7 +121,7 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
 
         Input shares = new Input(editArea, Messages.ColumnShares);
         shares.bindValue(Properties.shares.name(), Messages.ColumnShares, Values.Share, false);
-        shares.setVisible(model().supportsShares());
+        shares.setVisible(model().supportsShares() || model().supportsPremium());
 
         Button btnShares = new Button(editArea, SWT.ARROW | SWT.DOWN);
         btnShares.addSelectionListener(new SelectionAdapter()
@@ -138,10 +139,14 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
         dividendAmount.bindBigDecimal(Properties.dividendAmount.name(), "#,##0.0000"); //$NON-NLS-1$
         dividendAmount.bindCurrency(Properties.fxCurrencyCode.name());
         dividendAmount.setVisible(model().supportsShares());
+        
+        Input premium = new Input(editArea, Messages.LabelPremium);
+        premium.bindBigDecimal(Properties.premium.name(), "#,##0.00"); //$NON-NLS-1$
+        premium.setVisible(model().supportsPremium());
 
         // other input fields
 
-        String totalLabel = model().supportsTaxUnits() ? Messages.ColumnGrossValue : getTotalLabel();
+        String totalLabel = model().supportsTaxUnits() || model().supportsFees() ? Messages.ColumnGrossValue : getTotalLabel();
         Input fxGrossAmount = new Input(editArea, totalLabel);
         fxGrossAmount.bindValue(Properties.fxGrossAmount.name(), totalLabel, Values.Amount, true);
         fxGrossAmount.bindCurrency(Properties.fxCurrencyCode.name());
@@ -164,6 +169,23 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
         grossAmount.bindValue(Properties.grossAmount.name(), totalLabel, Values.Amount, true);
         grossAmount.bindCurrency(Properties.accountCurrencyCode.name());
 
+        // fees
+
+        Label plusForexFees = new Label(editArea, SWT.NONE);
+        plusForexFees.setText("+"); //$NON-NLS-1$
+        plusForexFees.setVisible(model().supportsFees());
+
+        Input forexFees = new Input(editArea, sign() + Messages.ColumnFees);
+        forexFees.bindValue(Properties.forexFees.name(), Messages.ColumnFees, Values.Amount, false);
+        forexFees.bindCurrency(Properties.securityCurrencyCode.name());
+        forexFees.setVisible(model().supportsFees());
+
+        Input fees = new Input(editArea, sign() + Messages.ColumnFees);
+        fees.bindValue(Properties.fees.name(), Messages.ColumnFees, Values.Amount, false);
+        fees.bindCurrency(Properties.accountCurrencyCode.name());
+        fees.setVisible(model().supportsFees());
+        fees.label.setVisible(false); // will only show if no fx available
+        
         // taxes
 
         Label plusForexTaxes = new Label(editArea, SWT.NONE);
@@ -186,7 +208,7 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
         Input total = new Input(editArea, getTotalLabel());
         total.bindValue(Properties.total.name(), Messages.ColumnTotal, Values.Amount, false);
         total.bindCurrency(Properties.accountCurrencyCode.name());
-        total.setVisible(model().supportsTaxUnits());
+        total.setVisible(model().supportsTaxUnits() || model().supportsFees());
 
         // note
 
@@ -203,7 +225,7 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
         //
 
         int widest = widest(securities != null ? securities.label : null, accounts.label, dateTime.label, shares.label,
-                        taxes.label, total.label, lblNote, fxGrossAmount.label);
+                        fees.label, taxes.label, total.label, lblNote, fxGrossAmount.label);
 
         FormDataFactory forms;
         if (securities != null)
@@ -249,6 +271,26 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
                             .thenRight(dividendAmount.currency).width(currencyWidth); //
         }
 
+        if (model().supportsPremium())
+        {
+            startingWith(btnShares).thenRight(premium.label) //
+                            .thenRight(premium.value).width(amountWidth) //
+                            .thenRight(premium.currency).width(currencyWidth); //
+        }
+
+        if (model().supportsFees())
+        {
+            startingWith(grossAmount.value) //
+                            .thenBelow(fees.value).width(amountWidth).label(fees.label).suffix(fees.currency)
+                            .thenBelow(total.value).width(amountWidth).label(total.label).thenRight(total.currency)
+                            .width(currencyWidth);
+            
+            startingWith(fees.value).thenLeft(plusForexFees).thenLeft(forexFees.currency).width(currencyWidth)
+                            .thenLeft(forexFees.value).width(amountWidth).thenLeft(forexFees.label);
+
+            forms = startingWith(total.value);
+        }
+        
         // forexTaxes - taxes
         if (model().supportsTaxUnits())
         {
@@ -281,6 +323,11 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
 
             exchangeRate.setVisible(isFxVisible);
             grossAmount.setVisible(isFxVisible);
+            
+            forexFees.setVisible(isFxVisible && model().supportsFees());
+            plusForexFees.setVisible(isFxVisible && model().supportsFees());
+            fees.label.setVisible(!isFxVisible && model().supportsFees());
+            
             forexTaxes.setVisible(isFxVisible && model().supportsShares());
             plusForexTaxes.setVisible(isFxVisible && model().supportsShares());
             taxes.label.setVisible(!isFxVisible && model().supportsTaxUnits());
@@ -291,9 +338,27 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
 
             // move input fields to have a nicer layout
             if (isFxVisible)
-                startingWith(grossAmount.value).thenBelow(taxes.value);
+            {
+                if (model().supportsTaxUnits())
+                {
+                    startingWith(grossAmount.value).thenBelow(taxes.value);
+                }
+                if (model().supportsFees())
+                {
+                    startingWith(grossAmount.value).thenBelow(fees.value).thenBelow(total.value);
+                }
+            }
             else
-                startingWith(fxGrossAmount.value).thenBelow(taxes.value);
+            {
+                if (model().supportsTaxUnits())
+                {
+                    startingWith(fxGrossAmount.value).thenBelow(taxes.value);
+                }
+                if (model().supportsFees())
+                {
+                    startingWith(fxGrossAmount.value).thenBelow(fees.value).thenBelow(total.value);
+                }
+            }
             editArea.layout();
         });
 
@@ -393,6 +458,18 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
         if (contextMenu != null && !contextMenu.isDisposed())
             contextMenu.dispose();
     }
+    
+    private String sign()
+    {
+        switch (model().getType())
+        {
+            case BUY_OPTION:
+                return "+ "; //$NON-NLS-1$
+            case SELL_OPTION:
+            default:
+                return "- "; //$NON-NLS-1$
+        }
+    }
 
     private String getTotalLabel() // NOSONAR
     {
@@ -402,12 +479,14 @@ public class AccountTransactionDialog extends AbstractTransactionDialog // NOSON
             case FEES:
             case INTEREST_CHARGE:
             case REMOVAL:
+            case BUY_OPTION:
                 return Messages.ColumnDebitNote;
             case INTEREST:
             case TAX_REFUND:
             case DIVIDENDS:
             case DEPOSIT:
             case FEES_REFUND:
+            case SELL_OPTION:
                 return Messages.ColumnCreditNote;
             case BUY:
             case SELL:

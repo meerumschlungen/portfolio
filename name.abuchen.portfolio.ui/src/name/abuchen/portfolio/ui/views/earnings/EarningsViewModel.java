@@ -30,20 +30,24 @@ public class EarningsViewModel
 {
     public enum Mode
     {
+        OPTIONS(Messages.LabelOptions, AccountTransaction.Type.BUY_OPTION, AccountTransaction.Type.SELL_OPTION), //
         DIVIDENDS(Messages.LabelDividends, AccountTransaction.Type.DIVIDENDS), //
         INTEREST(Messages.LabelInterest, AccountTransaction.Type.INTEREST, AccountTransaction.Type.INTEREST_CHARGE), //
         EARNINGS(Messages.LabelEarnings, AccountTransaction.Type.DIVIDENDS, AccountTransaction.Type.INTEREST,
-                        AccountTransaction.Type.INTEREST_CHARGE), //
+                        AccountTransaction.Type.INTEREST_CHARGE,
+                        AccountTransaction.Type.BUY_OPTION, AccountTransaction.Type.SELL_OPTION), //
         TAXES(Messages.ColumnTaxes, AccountTransaction.Type.DIVIDENDS, AccountTransaction.Type.INTEREST,
                         AccountTransaction.Type.INTEREST_CHARGE, AccountTransaction.Type.TAXES,
                         AccountTransaction.Type.TAX_REFUND), //
         FEES(Messages.ColumnFees, AccountTransaction.Type.DIVIDENDS, AccountTransaction.Type.INTEREST,
                         AccountTransaction.Type.INTEREST_CHARGE, AccountTransaction.Type.FEES,
-                        AccountTransaction.Type.FEES_REFUND), //
+                        AccountTransaction.Type.FEES_REFUND,
+                        AccountTransaction.Type.BUY_OPTION, AccountTransaction.Type.SELL_OPTION), //
         ALL("\u2211", AccountTransaction.Type.DIVIDENDS, AccountTransaction.Type.INTEREST, //$NON-NLS-1$
                         AccountTransaction.Type.INTEREST_CHARGE, AccountTransaction.Type.TAXES,
                         AccountTransaction.Type.TAX_REFUND, AccountTransaction.Type.FEES,
-                        AccountTransaction.Type.FEES_REFUND);
+                        AccountTransaction.Type.FEES_REFUND,
+                        AccountTransaction.Type.BUY_OPTION, AccountTransaction.Type.SELL_OPTION);
 
         private String label;
         private Set<AccountTransaction.Type> types;

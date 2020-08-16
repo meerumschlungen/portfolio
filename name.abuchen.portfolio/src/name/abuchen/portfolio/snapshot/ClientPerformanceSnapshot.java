@@ -351,9 +351,11 @@ public class ClientPerformanceSnapshot
                 {
                     case DIVIDENDS:
                     case INTEREST:
+                    case SELL_OPTION:
                         addEarningTransaction(account, t, mEarnings, earningsBySecurity, mTaxes, taxesBySecurity);
                         break;
                     case INTEREST_CHARGE:
+                    case BUY_OPTION:
                         mEarnings.subtract(value);
                         earnings.add(new TransactionPair<AccountTransaction>(account, t));
                         earningsBySecurity.computeIfAbsent(null, s -> MutableMoney.of(termCurrency)).subtract(value);
@@ -521,6 +523,7 @@ public class ClientPerformanceSnapshot
                     case TAX_REFUND:
                     case SELL:
                     case FEES_REFUND:
+                    case SELL_OPTION:
                         value.subtract(t.getMonetaryAmount().with(converter.at(t.getDateTime())));
                         break;
                     case REMOVAL:
@@ -528,6 +531,7 @@ public class ClientPerformanceSnapshot
                     case INTEREST_CHARGE:
                     case TAXES:
                     case BUY:
+                    case BUY_OPTION:
                         value.add(t.getMonetaryAmount().with(converter.at(t.getDateTime())));
                         break;
                     case TRANSFER_IN:

@@ -32,7 +32,7 @@ public class AccountTransactionModel extends AbstractModel
     {
         security, account, date, time, shares, fxGrossAmount, dividendAmount, exchangeRate, inverseExchangeRate, grossAmount, // NOSONAR
         fxTaxes, taxes, total, note, exchangeRateCurrencies, inverseExchangeRateCurrencies, // NOSONAR
-        accountCurrencyCode, securityCurrencyCode, fxCurrencyCode, calculationStatus; // NOSONAR
+        accountCurrencyCode, securityCurrencyCode, fxCurrencyCode, calculationStatus, premium, forexFees, fees; // NOSONAR
     }
 
     public static final Security EMPTY_SECURITY = new Security("-----", ""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -52,6 +52,9 @@ public class AccountTransactionModel extends AbstractModel
     private long fxGrossAmount;
     private BigDecimal dividendAmount = BigDecimal.ZERO;
     private BigDecimal exchangeRate = BigDecimal.ONE;
+    private BigDecimal premium = BigDecimal.ZERO;
+    private long forexFees;
+    private long fees;
     private long grossAmount;
 
     private long fxTaxes;
@@ -62,6 +65,8 @@ public class AccountTransactionModel extends AbstractModel
 
     private IStatus calculationStatus = ValidationStatus.ok();
 
+    private static final double OPTION_FACTOR = 100.0d;
+    
     public AccountTransactionModel(Client client, AccountTransaction.Type type)
     {
         this.client = client;
@@ -89,6 +94,8 @@ public class AccountTransactionModel extends AbstractModel
             case INTEREST:
             case INTEREST_CHARGE:
             case DIVIDENDS:
+            case SELL_OPTION:
+            case BUY_OPTION:
                 return;
             case BUY:
             case SELL:
@@ -130,13 +137,16 @@ public class AccountTransactionModel extends AbstractModel
 
         t.setDateTime(LocalDateTime.of(date, time));
         t.setSecurity(!EMPTY_SECURITY.equals(security) ? security : null);
-        t.setShares(supportsShares() ? shares : 0);
+        t.setShares(supportsShares() || supportsPremium() ? shares : 0);
         t.setAmount(total);
         t.setType(type);
         t.setNote(note);
 
         t.clearUnits();
 
+        if (fees != 0)
+            t.addUnit(new Transaction.Unit(Transaction.Unit.Type.FEE, Money.of(getAccountCurrencyCode(), fees)));
+        
         if (taxes != 0)
             t.addUnit(new Transaction.Unit(Transaction.Unit.Type.TAX, Money.of(getAccountCurrencyCode(), taxes)));
 
@@ -149,6 +159,12 @@ public class AccountTransactionModel extends AbstractModel
                             getExchangeRate());
             t.addUnit(forex);
 
+            if (forexFees != 0)
+                t.addUnit(new Transaction.Unit(Transaction.Unit.Type.FEE, //
+                                Money.of(getAccountCurrencyCode(), Math.round(forexFees * exchangeRate.doubleValue())), //
+                                Money.of(getSecurityCurrencyCode(), forexFees), //
+                                exchangeRate));
+            
             if (fxTaxes != 0)
                 t.addUnit(new Transaction.Unit(Transaction.Unit.Type.TAX, //
                                 Money.of(getAccountCurrencyCode(), Math.round(fxTaxes * exchangeRate.doubleValue())), //
@@ -165,6 +181,9 @@ public class AccountTransactionModel extends AbstractModel
 
         setFxGrossAmount(0);
         setDividendAmount(BigDecimal.ZERO);
+        setPremium(BigDecimal.ZERO);
+        setForexFees(0);
+        setFees(0);
         setGrossAmount(0);
         setTaxes(0);
         setFxTaxes(0);
@@ -174,6 +193,16 @@ public class AccountTransactionModel extends AbstractModel
     public boolean supportsShares()
     {
         return type == AccountTransaction.Type.DIVIDENDS;
+    }
+    
+    public boolean supportsPremium()
+    {
+        return type == AccountTransaction.Type.SELL_OPTION || type == AccountTransaction.Type.BUY_OPTION;
+    }
+    
+    public boolean supportsFees()
+    {
+        return type == AccountTransaction.Type.SELL_OPTION || type == AccountTransaction.Type.BUY_OPTION;
     }
 
     public boolean supportsSecurity()
@@ -230,6 +259,8 @@ public class AccountTransactionModel extends AbstractModel
         this.exchangeRate = BigDecimal.ONE;
         this.taxes = 0;
         this.fxTaxes = 0;
+        this.fees = 0;
+        this.forexFees = 0;
 
         transaction.getUnits().forEach(unit -> {
             switch (unit.getType())
@@ -245,6 +276,12 @@ public class AccountTransactionModel extends AbstractModel
                     else
                         this.taxes += unit.getAmount().getAmount();
                     break;
+                case FEE:
+                    if (unit.getForex() != null)
+                        this.forexFees += unit.getForex().getAmount();
+                    else
+                        this.fees += unit.getAmount().getAmount();
+                    break;
                 default:
                     throw new UnsupportedOperationException();
             }
@@ -257,6 +294,7 @@ public class AccountTransactionModel extends AbstractModel
             this.fxGrossAmount = grossAmount;
 
         this.dividendAmount = calculateDividendAmount();
+        this.premium = calculatePremium();
 
         this.note = transaction.getNote();
     }
@@ -411,6 +449,9 @@ public class AccountTransactionModel extends AbstractModel
 
         firePropertyChange(Properties.dividendAmount.name(), this.dividendAmount,
                         this.dividendAmount = calculateDividendAmount());
+        
+        long myGrossAmount = calculateGrossAmount4Shares();
+        setFxGrossAmount(myGrossAmount);
     }
 
     public long getFxGrossAmount()
@@ -555,12 +596,52 @@ public class AccountTransactionModel extends AbstractModel
         firePropertyChange(Properties.calculationStatus.name(), this.calculationStatus,
                         this.calculationStatus = calculateStatus());
     }
-
+    
     public void triggerTotal(long total)
     {
         firePropertyChange(Properties.total.name(), this.total, this.total = total);
     }
 
+    public BigDecimal getPremium()
+    {
+        return premium;
+    }
+
+    public void setPremium(BigDecimal premium)
+    {
+        firePropertyChange(Properties.premium.name(), this.premium, this.premium = premium);
+        long myGrossAmount = calculateGrossAmount4Premium();
+        setFxGrossAmount(myGrossAmount);
+    }
+    
+    public long getFees()
+    {
+        return fees;
+    }
+
+    public void setFees(long fees)
+    {
+        firePropertyChange(Properties.fees.name(), this.fees, this.fees = fees);
+        triggerTotal(calculateTotal());
+
+        firePropertyChange(Properties.calculationStatus.name(), this.calculationStatus,
+                        this.calculationStatus = calculateStatus());
+    }
+    
+    public long getForexFees()
+    {
+        return forexFees;
+    }
+
+    public void setForexFees(long forexFees)
+    {
+        firePropertyChange(Properties.forexFees.name(), this.forexFees, this.forexFees = forexFees);
+        triggerTotal(calculateTotal());
+
+        firePropertyChange(Properties.calculationStatus.name(), this.calculationStatus,
+                        this.calculationStatus = calculateStatus());
+    }
+        
     protected BigDecimal calculateDividendAmount()
     {
         if (shares > 0)
@@ -569,23 +650,56 @@ public class AccountTransactionModel extends AbstractModel
         else
             return BigDecimal.ZERO;
     }
+    
+    private BigDecimal calculatePremium()
+    {
+        if (shares > 0)
+            return BigDecimal.valueOf(
+                            (fxGrossAmount * Values.Share.factor()) / (double) shares / Values.Amount.divider() / OPTION_FACTOR);
+        else
+            return BigDecimal.ZERO;
+    }
 
     protected long calculateGrossAmount4Total()
     {
-        long totalTaxes = taxes + Math.round(exchangeRate.doubleValue() * fxTaxes);
-        return total + totalTaxes;
+        long feesAndTaxes = fees + taxes + Math.round(exchangeRate.doubleValue() * (forexFees + fxTaxes));
+        return total + feesAndTaxes;
     }
 
     protected long calculateGrossAmount4Dividend()
     {
-        return Math.round((shares * dividendAmount.doubleValue() * Values.Amount.factor())
+        if (dividendAmount != null)
+            return Math.round((shares * dividendAmount.doubleValue() * Values.Amount.factor())
                         / (double) Values.Share.factor());
+        else
+            return 0L;
     }
 
+    protected long calculateGrossAmount4Premium()
+    {
+        if (premium != null)
+            return Math.round((shares * OPTION_FACTOR * premium.doubleValue() * Values.Amount.factor())
+                        / (double) Values.Share.factor());
+        else
+            return 0L;
+    }
+    
+    protected long calculateGrossAmount4Shares()
+    {
+        if (supportsPremium())
+            return calculateGrossAmount4Premium();
+        else
+            return calculateGrossAmount4Dividend();
+    }
+    
     private long calculateTotal()
     {
-        long totalTaxes = taxes + Math.round(exchangeRate.doubleValue() * fxTaxes);
-        return Math.max(0, grossAmount - totalTaxes);
+        long feesAndTaxes = fees + taxes + Math.round(exchangeRate.doubleValue() * (forexFees + fxTaxes));
+        
+        if (AccountTransaction.Type.BUY_OPTION.equals(type))
+            return grossAmount + feesAndTaxes;
+        else
+            return Math.max(0, grossAmount - feesAndTaxes);
     }
 
     public String getNote()

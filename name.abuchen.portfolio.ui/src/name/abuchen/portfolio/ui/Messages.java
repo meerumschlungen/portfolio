@@ -588,6 +588,7 @@ public class Messages extends NLS
     public static String LabelNumberDataSeries;
     public static String LabelOneOfX;
     public static String LabelOpenTrade;
+    public static String LabelOptions;
     public static String LabelOrderByTaxonomy;
     public static String LabelPassword;
     public static String LabelPasswordRepeat;
@@ -600,6 +601,7 @@ public class Messages extends NLS
     public static String LabelPortfolioPerformanceFile;
     public static String LabelPortfolios;
     public static String LabelPortfolioTimeMachine;
+    public static String LabelPremium;
     public static String LabelPreTax;
     public static String LabelQuandlCode;
     public static String LabelQuandlColumnNameQuote;

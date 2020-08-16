@@ -140,6 +140,7 @@ public class Account implements TransactionOwner<AccountTransaction>, Investment
                                 case TRANSFER_IN:
                                 case TAX_REFUND:
                                 case FEES_REFUND:
+                                case SELL_OPTION:
                                     return t.getAmount();
                                 case FEES:
                                 case INTEREST_CHARGE:
@@ -147,6 +148,7 @@ public class Account implements TransactionOwner<AccountTransaction>, Investment
                                 case REMOVAL:
                                 case BUY:
                                 case TRANSFER_OUT:
+                                case BUY_OPTION:
                                     return -t.getAmount();
                                 default:
                                     throw new UnsupportedOperationException();
