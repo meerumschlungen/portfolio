@@ -478,13 +478,17 @@ public class ClientPerformanceSnapshot
     {
         Money value = transaction.getGrossValue().with(converter.at(transaction.getDateTime()));
         if (transaction.getType().isCredit())
+        {
             mEarnings.add(value);
+            earningsBySecurity.computeIfAbsent(transaction.getSecurity(), k -> MutableMoney.of(converter.getTermCurrency())).add(value);
+        }
         else
+        {
             mEarnings.subtract(value);
+            earningsBySecurity.computeIfAbsent(transaction.getSecurity(), k -> MutableMoney.of(converter.getTermCurrency())).subtract(value);
+        }
         
         this.earnings.add(new TransactionPair<AccountTransaction>(account, transaction));
-        earningsBySecurity.computeIfAbsent(transaction.getSecurity(), k -> MutableMoney.of(converter.getTermCurrency()))
-                        .add(value);
 
         Money tax = transaction.getUnitSum(Unit.Type.TAX, converter).with(converter.at(transaction.getDateTime()));
         if (!tax.isZero())
