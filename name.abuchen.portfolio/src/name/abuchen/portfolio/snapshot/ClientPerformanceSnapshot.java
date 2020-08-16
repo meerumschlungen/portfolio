@@ -352,13 +352,11 @@ public class ClientPerformanceSnapshot
                     case DIVIDENDS:
                     case INTEREST:
                     case SELL_OPTION:
-                        addEarningTransaction(account, t, mEarnings, earningsBySecurity, mTaxes, taxesBySecurity);
+                        addEarningTransaction(account, t, mEarnings, earningsBySecurity, mTaxes, mFees, taxesBySecurity, feesBySecurity);
                         break;
                     case INTEREST_CHARGE:
                     case BUY_OPTION:
-                        mEarnings.subtract(value);
-                        earnings.add(new TransactionPair<AccountTransaction>(account, t));
-                        earningsBySecurity.computeIfAbsent(null, s -> MutableMoney.of(termCurrency)).subtract(value);
+                        addEarningTransaction(account, t, mEarnings, earningsBySecurity, mTaxes, mFees, taxesBySecurity, feesBySecurity);
                         break;
                     case DEPOSIT:
                         mDeposits.add(value);
@@ -475,14 +473,18 @@ public class ClientPerformanceSnapshot
     }
 
     private void addEarningTransaction(Account account, AccountTransaction transaction, MutableMoney mEarnings,
-                    Map<Security, MutableMoney> earningsBySecurity, MutableMoney mTaxes,
-                    Map<Security, MutableMoney> taxesBySecurity)
+                    Map<Security, MutableMoney> earningsBySecurity, MutableMoney mTaxes, MutableMoney mFees,
+                    Map<Security, MutableMoney> taxesBySecurity, Map<Security, MutableMoney> feesBySecurity)
     {
-        Money earned = transaction.getGrossValue().with(converter.at(transaction.getDateTime()));
-        mEarnings.add(earned);
+        Money value = transaction.getGrossValue().with(converter.at(transaction.getDateTime()));
+        if (transaction.getType().isCredit())
+            mEarnings.add(value);
+        else
+            mEarnings.subtract(value);
+        
         this.earnings.add(new TransactionPair<AccountTransaction>(account, transaction));
         earningsBySecurity.computeIfAbsent(transaction.getSecurity(), k -> MutableMoney.of(converter.getTermCurrency()))
-                        .add(earned);
+                        .add(value);
 
         Money tax = transaction.getUnitSum(Unit.Type.TAX, converter).with(converter.at(transaction.getDateTime()));
         if (!tax.isZero())
@@ -492,8 +494,17 @@ public class ClientPerformanceSnapshot
             taxesBySecurity.computeIfAbsent(transaction.getSecurity(),
                             s -> MutableMoney.of(converter.getTermCurrency())).add(tax);
         }
+        
+        Money fee = transaction.getUnitSum(Unit.Type.FEE, converter).with(converter.at(transaction.getDateTime()));
+        if (!fee.isZero())
+        {
+            mFees.add(fee);
+            this.fees.add(new TransactionPair<AccountTransaction>(account, transaction));
+            feesBySecurity.computeIfAbsent(transaction.getSecurity(),
+                            s -> MutableMoney.of(converter.getTermCurrency())).add(fee);
+        }
     }
-
+    
     private void addCurrencyGains()
     {
         Map<String, MutableMoney> currency2money = new HashMap<>();
