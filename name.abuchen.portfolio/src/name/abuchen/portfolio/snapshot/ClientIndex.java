@@ -55,6 +55,7 @@ import name.abuchen.portfolio.util.Interval;
         dividends = new long[size];
         interest = new long[size];
         interestCharge = new long[size];
+        options = new long[size];
 
         collectTransferalsAndTaxes(interval);
 
@@ -149,6 +150,12 @@ import name.abuchen.portfolio.util.Interval;
                                     case INTEREST_CHARGE:
                                         addValue(interest, t.getCurrencyCode(), -t.getAmount(), interval, d);
                                         addValue(interestCharge, t.getCurrencyCode(), t.getAmount(), interval, d);
+                                        break;
+                                    case SELL_OPTION:
+                                        addValue(getOptions(), t.getCurrencyCode(), t.getAmount(), interval, d);
+                                        break;
+                                    case BUY_OPTION:
+                                        addValue(getOptions(), t.getCurrencyCode(), -t.getAmount(), interval, d);
                                         break;
                                     default:
                                         // do nothing

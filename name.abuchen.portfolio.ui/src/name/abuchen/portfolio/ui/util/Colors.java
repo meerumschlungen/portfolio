@@ -19,6 +19,7 @@ public final class Colors
     public static final Color BLACK = Display.getDefault().getSystemColor(SWT.COLOR_BLACK);
     public static final Color RED = Display.getDefault().getSystemColor(SWT.COLOR_RED);
     public static final Color GREEN = Display.getDefault().getSystemColor(SWT.COLOR_GREEN);
+    public static final Color BLUE = Display.getDefault().getSystemColor(SWT.COLOR_BLUE);
 
     private static final ColorRegistry REGISTRY = new ColorRegistry();
 

@@ -458,6 +458,7 @@ public class Messages extends NLS
     public static String LabelAccumulatedEarnings;
     public static String LabelAccumulatedInterest;
     public static String LabelAccumulatedInterestCharge;
+    public static String LabelAccumulatedOptions;
     public static String LabelAccumulatedTaxes;
     public static String LabelAggregation;
     public static String LabelAggregationDaily;
