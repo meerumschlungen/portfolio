@@ -106,7 +106,9 @@ public class Messages extends NLS
     public static String ColumnCapitalGainsMovingAveragePercent_MenuLabel;
     public static String ColumnCapitalGainsMovingAveragePercent_Option;
     public static String ColumnChangeOnPrevious;
+    public static String ColumnChangeOnPreviousAmount;
     public static String ColumnChangeOnPrevious_MenuLabel;
+    public static String ColumnChangeOnPrevious_MenuLabelAmount;
     public static String ColumnColor;
     public static String ColumnCreditNote;
     public static String ColumnColumnLabel;
@@ -479,8 +481,11 @@ public class Messages extends NLS
     public static String LabelChartDetailChartDevelopmentClosing;
     public static String LabelChartDetailChartDevelopmentClosingFIFO;
     public static String LabelChartDetailMarker;
-    public static String LabelChartDetailMarkerInvestments;
     public static String LabelChartDetailMarkerDividends;
+    public static String LabelChartDetailMarkerHigh;
+    public static String LabelChartDetailMarkerHighLow;
+    public static String LabelChartDetailMarkerInvestments;
+    public static String LabelChartDetailMarkerLow;
     public static String LabelChartDetailMarkerSplits;
     public static String LabelChartDetailMarkerPurchaseFIFO;
     public static String LabelChartDetailMarkerPurchaseFIFOHoldingPeriod;
@@ -676,8 +681,10 @@ public class Messages extends NLS
     public static String LabelSuffix_PreTax;
     public static String LabelTaxonomies;
     public static String LabelTaxonomyTemplates;
+    public static String LabelTheme;
     public static String LabelToday;
     public static String LabelToolTipDividendDetails;
+    public static String LabelToolTipDividendDetailsGross;
     public static String LabelToolTipInvestmentDetails;
     public static String LabelToolTipTransactionSummary;
     public static String LabelTotalSum;
@@ -685,6 +692,7 @@ public class Messages extends NLS
     public static String LabelTrades;
     public static String LabelTradesBasicStatistics;
     public static String LabelTradesProfitLoss;
+    public static String LabelTradesTurnoverRate;
     public static String LabelTradingActivityChart;
     public static String LabelTransactions;
     public static String LabelTransferals;
@@ -849,6 +857,8 @@ public class Messages extends NLS
     public static String MsgPortfolioToMissing;
     public static String MsgPreviousStockSplit;
     public static String MsgRestartRequired;
+    public static String MsgSecurityHasNoQuotes;
+    public static String MsgThemeRestartRequired;
     public static String MsgUpdateNewInVersionX;
     public static String MsgUpdateRequiresLatestJavaVersion;
     public static String MsgUpdateRunning32BitOn64BitOS;
@@ -910,6 +920,7 @@ public class Messages extends NLS
     public static String PrefLabelNote;
     public static String PrefLabelProxyHost;
     public static String PrefLabelProxyPort;
+    public static String PrefLabelSharesDigits;
     public static String PrefLabelUseIndirectQuotation;
     public static String PrefMsgConfigureUpdates;
     public static String PrefMsgLanguageConfig;
@@ -923,6 +934,7 @@ public class Messages extends NLS
     public static String PrefTitle;
     public static String PrefTitleAlphaVantage;
     public static String PrefTitleAPIKeys;
+    public static String PrefTitleFormatting;
     public static String PrefTitleGeneral;
     public static String PrefTitleLanguage;
     public static String PrefTitlePresentation;
@@ -1025,6 +1037,7 @@ public class Messages extends NLS
     public static String TooltipQuoteAtDate;
     public static String TooltipRebalancingIndicator;
     public static String TooltipSemiVolatility;
+    public static String TooltipTurnoverRate;
     public static String TooltipVolatility;
     public static String WatchlistDelete;
     public static String WatchlistEditDialog;
